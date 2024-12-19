@@ -4,15 +4,14 @@ namespace XrmToolBox.MergeTool
 {
     partial class MyPluginControl
     {
-        /// <summary> 
-        /// Variable nécessaire au concepteur.
-        /// </summary>
         private System.ComponentModel.IContainer components = null;
+        private System.Windows.Forms.ToolStrip toolStripMenu;
+        private System.Windows.Forms.ToolStripButton tsbClose;
+        private System.Windows.Forms.ToolStripButton tsbSample;
+        private System.Windows.Forms.ToolStripSeparator tssSeparator1;
+        private System.Windows.Forms.ToolStripButton tsbMerge;
+        private System.Windows.Forms.Panel panelMergeControl;
 
-        /// <summary> 
-        /// Nettoyage des ressources utilisées.
-        /// </summary>
-        /// <param name="disposing">true si les ressources managées doivent être supprimées ; sinon, false.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -22,12 +21,6 @@ namespace XrmToolBox.MergeTool
             base.Dispose(disposing);
         }
 
-        #region Code généré par le Concepteur de composants
-
-        /// <summary> 
-        /// Méthode requise pour la prise en charge du concepteur - ne modifiez pas 
-        /// le contenu de cette méthode avec l'éditeur de code.
-        /// </summary>
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MyPluginControl));
@@ -36,7 +29,7 @@ namespace XrmToolBox.MergeTool
             this.tsbSample = new System.Windows.Forms.ToolStripButton();
             this.tssSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.tsbMerge = new System.Windows.Forms.ToolStripButton();
-            this.mergeControl = new XrmToolBox.MergeTool.MergeControl(this.Service);
+            this.panelMergeControl = new System.Windows.Forms.Panel();
             this.toolStripMenu.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -84,19 +77,19 @@ namespace XrmToolBox.MergeTool
             this.tsbMerge.Text = "Merge Records";
             this.tsbMerge.Click += new System.EventHandler(this.TsbMerge_Click);
             // 
-            // mergeControl
+            // panelMergeControl
             // 
-            this.mergeControl.Location = new System.Drawing.Point(0, 31);
-            this.mergeControl.Name = "mergeControl";
-            this.mergeControl.Size = new System.Drawing.Size(839, 431);
-            this.mergeControl.TabIndex = 5;
-            this.mergeControl.Visible = false;
+            this.panelMergeControl.Location = new System.Drawing.Point(0, 31);
+            this.panelMergeControl.Name = "panelMergeControl";
+            this.panelMergeControl.Size = new System.Drawing.Size(839, 431);
+            this.panelMergeControl.TabIndex = 5;
+            this.panelMergeControl.Visible = false;
             // 
             // MyPluginControl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.mergeControl);
+            this.Controls.Add(this.panelMergeControl);
             this.Controls.Add(this.toolStripMenu);
             this.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.Name = "MyPluginControl";
@@ -106,15 +99,6 @@ namespace XrmToolBox.MergeTool
             this.toolStripMenu.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
-
         }
-
-        #endregion
-        private System.Windows.Forms.ToolStrip toolStripMenu;
-        private System.Windows.Forms.ToolStripButton tsbClose;
-        private System.Windows.Forms.ToolStripButton tsbSample;
-        private System.Windows.Forms.ToolStripSeparator tssSeparator1;
-        private System.Windows.Forms.ToolStripButton tsbMerge;
-        private MergeControl mergeControl;
     }
 }

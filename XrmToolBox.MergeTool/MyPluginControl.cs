@@ -17,6 +17,7 @@ namespace XrmToolBox.MergeTool
     public partial class MyPluginControl : PluginControlBase
     {
         private Settings mySettings;
+        private MergeControl mergeControl;
 
         public MyPluginControl()
         {
@@ -45,13 +46,16 @@ namespace XrmToolBox.MergeTool
             tsbMerge.Click += TsbMerge_Click;
             toolStrip.Items.Add(tsbMerge);
             Controls.Add(toolStrip);
+
+            // Initialize the merge control
+            mergeControl = new MergeControl(Service);
+            mergeControl.Dock = DockStyle.Fill;
+            panelMergeControl.Controls.Add(mergeControl);
         }
 
         private void TsbMerge_Click(object sender, EventArgs e)
         {
-            MergeControl mergeControl = new MergeControl(Service);
-            Controls.Add(mergeControl);
-            mergeControl.BringToFront();
+            panelMergeControl.Visible = !panelMergeControl.Visible;
         }
 
         private void tsbClose_Click(object sender, EventArgs e)
