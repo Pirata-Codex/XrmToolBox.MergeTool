@@ -224,6 +224,12 @@
     <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Dynamics365.Merge\Dynamics365.Merge.csproj">
+      <Project>{69140922-c590-4b6a-9cfd-7b080c8c5568}</Project>
+      <Name>Dynamics365.Merge</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>
