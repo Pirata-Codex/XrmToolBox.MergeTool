@@ -5,7 +5,7 @@ VisualStudioVersion = 17.12.35514.174
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XrmToolBox.MergeTool", "XrmToolBox.MergeTool\XrmToolBox.MergeTool.csproj", "{4C84ACFE-E5A9-49B6-A8F3-BB88C192B8D3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dynamics365.Merge", "Orchidpharmed.Merge\Dynamics365.Merge.csproj", "{69140922-C590-4B6A-9CFD-7B080C8C5568}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dynamics365.Merge", "Dynamics365.Merge\Dynamics365.Merge.csproj", "{69140922-C590-4B6A-9CFD-7B080C8C5568}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
