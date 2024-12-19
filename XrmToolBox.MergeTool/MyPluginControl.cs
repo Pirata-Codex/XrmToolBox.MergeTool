@@ -41,13 +41,13 @@ namespace XrmToolBox.MergeTool
             }
 
             // Add a button to open the merge control
-            ToolStrip toolStrip = new ToolStrip();
-            ToolStripButton tsbMerge = new ToolStripButton("Merge Records");
-            tsbMerge.Click += TsbMerge_Click;
-            toolStrip.Items.Add(tsbMerge);
-            Controls.Add(toolStrip);
+            //ToolStrip toolStrip = new ToolStrip();
+            //ToolStripButton tsbMerge = new ToolStripButton("Merge Records");
+            //tsbMerge.Click += TsbMerge_Click;
+            //toolStrip.Items.Add(tsbMerge);
+            //Controls.Add(toolStrip);
 
-            // Initialize the merge control
+            //// Initialize the merge control
             mergeControl = new MergeControl(Service);
             mergeControl.Dock = DockStyle.Fill;
             panelMergeControl.Controls.Add(mergeControl);
@@ -56,18 +56,6 @@ namespace XrmToolBox.MergeTool
         private void TsbMerge_Click(object sender, EventArgs e)
         {
             panelMergeControl.Visible = !panelMergeControl.Visible;
-        }
-
-        private void tsbClose_Click(object sender, EventArgs e)
-        {
-            CloseTool();
-        }
-
-        private void tsbSample_Click(object sender, EventArgs e)
-        {
-            // The ExecuteMethod method handles connecting to an
-            // organization if XrmToolBox is not yet connected
-            ExecuteMethod(GetAccounts);
         }
 
         private void GetAccounts()
