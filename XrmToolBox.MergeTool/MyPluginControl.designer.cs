@@ -5,9 +5,13 @@ namespace XrmToolBox.MergeTool
     partial class MyPluginControl
     {
         private System.ComponentModel.IContainer components = null;
-        private System.Windows.Forms.ToolStrip toolStripMenu;
-        private System.Windows.Forms.ToolStripButton tsbMerge;
-        private System.Windows.Forms.Panel panelMergeControl;
+        private System.Windows.Forms.DataGridView dataGridViewEntities;
+        private System.Windows.Forms.TextBox txtSearch;
+        private System.Windows.Forms.TextBox txtFilePath;
+        private System.Windows.Forms.Button btnSelectFile;
+        private System.Windows.Forms.Button btnMerge;
+        private System.Windows.Forms.ProgressBar progressBar;
+        private System.Windows.Forms.Label lblProgress;
 
         protected override void Dispose(bool disposing)
         {
@@ -20,54 +24,96 @@ namespace XrmToolBox.MergeTool
 
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MyPluginControl));
-            this.toolStripMenu = new System.Windows.Forms.ToolStrip();
-            this.tsbMerge = new System.Windows.Forms.ToolStripButton();
-            this.panelMergeControl = new System.Windows.Forms.Panel();
-            this.toolStripMenu.SuspendLayout();
+            this.dataGridViewEntities = new System.Windows.Forms.DataGridView();
+            this.txtSearch = new System.Windows.Forms.TextBox();
+            this.txtFilePath = new System.Windows.Forms.TextBox();
+            this.btnSelectFile = new System.Windows.Forms.Button();
+            this.btnMerge = new System.Windows.Forms.Button();
+            this.progressBar = new System.Windows.Forms.ProgressBar();
+            this.lblProgress = new System.Windows.Forms.Label();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewEntities)).BeginInit();
             this.SuspendLayout();
             // 
-            // toolStripMenu
+            // dataGridViewEntities
             // 
-            this.toolStripMenu.ImageScalingSize = new System.Drawing.Size(24, 24);
-            this.toolStripMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-                    this.tsbMerge});
-            this.toolStripMenu.Location = new System.Drawing.Point(0, 0);
-            this.toolStripMenu.Name = "toolStripMenu";
-            this.toolStripMenu.Padding = new System.Windows.Forms.Padding(0, 0, 2, 0);
-            this.toolStripMenu.Size = new System.Drawing.Size(839, 31);
-            this.toolStripMenu.TabIndex = 4;
-            this.toolStripMenu.Text = "toolStrip1";
-
+            this.dataGridViewEntities.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridViewEntities.Location = new System.Drawing.Point(12, 41);
+            this.dataGridViewEntities.Name = "dataGridViewEntities";
+            this.dataGridViewEntities.RowHeadersWidth = 62;
+            this.dataGridViewEntities.RowTemplate.Height = 28;
+            this.dataGridViewEntities.Size = new System.Drawing.Size(815, 300);
+            this.dataGridViewEntities.TabIndex = 0;
+            this.dataGridViewEntities.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             // 
-            // tsbMerge
+            // txtSearch
             // 
-            this.tsbMerge.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.tsbMerge.Name = "tsbMerge";
-            this.tsbMerge.Size = new System.Drawing.Size(28, 28);
-            this.tsbMerge.Text = "Merge Records";
-            this.tsbMerge.Click += new System.EventHandler(this.TsbMerge_Click);
+            this.txtSearch.Location = new System.Drawing.Point(12, 9);
+            this.txtSearch.Name = "txtSearch";
+            this.txtSearch.Size = new System.Drawing.Size(200, 26);
+            this.txtSearch.TabIndex = 1;
+            this.txtSearch.Text = "Search...";
+            this.txtSearch.ForeColor = System.Drawing.Color.Gray;
+            this.txtSearch.GotFocus += new System.EventHandler(this.RemoveText);
+            this.txtSearch.LostFocus += new System.EventHandler(this.AddText);
+            this.txtSearch.TextChanged += new System.EventHandler(this.txtSearch_TextChanged);
             // 
-            // panelMergeControl
+            // txtFilePath
             // 
-            this.panelMergeControl.Location = new System.Drawing.Point(0, 31);
-            this.panelMergeControl.Name = "panelMergeControl";
-            this.panelMergeControl.Size = new System.Drawing.Size(839, 431);
-            this.panelMergeControl.TabIndex = 5;
-            this.panelMergeControl.Visible = false;
+            this.txtFilePath.Location = new System.Drawing.Point(12, 347);
+            this.txtFilePath.Name = "txtFilePath";
+            this.txtFilePath.Size = new System.Drawing.Size(200, 26);
+            this.txtFilePath.TabIndex = 2;
+            // 
+            // btnSelectFile
+            // 
+            this.btnSelectFile.Location = new System.Drawing.Point(218, 345);
+            this.btnSelectFile.Name = "btnSelectFile";
+            this.btnSelectFile.Size = new System.Drawing.Size(75, 30);
+            this.btnSelectFile.TabIndex = 3;
+            this.btnSelectFile.Text = "Select File";
+            this.btnSelectFile.UseVisualStyleBackColor = true;
+            this.btnSelectFile.Click += new System.EventHandler(this.btnSelectFile_Click);
+            // 
+            // btnMerge
+            // 
+            this.btnMerge.Location = new System.Drawing.Point(12, 383);
+            this.btnMerge.Name = "btnMerge";
+            this.btnMerge.Size = new System.Drawing.Size(75, 30);
+            this.btnMerge.TabIndex = 4;
+            this.btnMerge.Text = "Merge";
+            this.btnMerge.UseVisualStyleBackColor = true;
+            this.btnMerge.Click += new System.EventHandler(this.btnMerge_Click);
+            // 
+            // progressBar
+            // 
+            this.progressBar.Location = new System.Drawing.Point(12, 419);
+            this.progressBar.Name = "progressBar";
+            this.progressBar.Size = new System.Drawing.Size(815, 23);
+            this.progressBar.TabIndex = 5;
+            // 
+            // lblProgress
+            // 
+            this.lblProgress.AutoSize = true;
+            this.lblProgress.Location = new System.Drawing.Point(12, 445);
+            this.lblProgress.Name = "lblProgress";
+            this.lblProgress.Size = new System.Drawing.Size(0, 20);
+            this.lblProgress.TabIndex = 6;
             // 
             // MyPluginControl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.panelMergeControl);
-            this.Controls.Add(this.toolStripMenu);
-            this.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.Controls.Add(this.lblProgress);
+            this.Controls.Add(this.progressBar);
+            this.Controls.Add(this.btnMerge);
+            this.Controls.Add(this.btnSelectFile);
+            this.Controls.Add(this.txtFilePath);
+            this.Controls.Add(this.txtSearch);
+            this.Controls.Add(this.dataGridViewEntities);
             this.Name = "MyPluginControl";
             this.Size = new System.Drawing.Size(839, 462);
             this.Load += new System.EventHandler(this.MyPluginControl_Load);
-            this.toolStripMenu.ResumeLayout(false);
-            this.toolStripMenu.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewEntities)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
         }

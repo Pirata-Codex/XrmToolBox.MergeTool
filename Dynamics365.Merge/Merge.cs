@@ -18,6 +18,9 @@ namespace Dynamics365.Merge
         private bool FillNullsOnTargetFromSource;
 
         private EntityMetadata MetaData;
+
+        public event EventHandler<string> OnFunctionCalled;
+
         public MergeRequest(string logicalName, string sourceId, string targetId, IOrganizationService orgService, bool fillNullsOnTargetFromSource)
         {
             LogicalName = logicalName;
@@ -29,11 +32,12 @@ namespace Dynamics365.Merge
 
         private protected void GetEntityMetaData(string logicalName)
         {
+            OnFunctionCalled?.Invoke(this, nameof(GetEntityMetaData));
+
             RetrieveEntityRequest retrieveEntity = new RetrieveEntityRequest
             {
                 EntityFilters = EntityFilters.Relationships,
                 LogicalName = logicalName
-
             };
 
             RetrieveEntityResponse entityResponse = (RetrieveEntityResponse)orgService.Execute(retrieveEntity);
@@ -42,6 +46,8 @@ namespace Dynamics365.Merge
 
         private protected OneToManyRelationshipMetadata RetrieveOneToManyRelationship(string relationshipName)
         {
+            OnFunctionCalled?.Invoke(this, nameof(RetrieveOneToManyRelationship));
+
             RetrieveRelationshipRequest req = new RetrieveRelationshipRequest
             {
                 Name = relationshipName
@@ -53,7 +59,8 @@ namespace Dynamics365.Merge
 
         private protected EntityCollection GetRelatedRecordsBasedOnOneToManyRelationshipMetadata(OneToManyRelationshipMetadata relationshipMetadata, Guid parentId)
         {
-            
+            OnFunctionCalled?.Invoke(this, nameof(GetRelatedRecordsBasedOnOneToManyRelationshipMetadata));
+
             string childEntityType = relationshipMetadata.ReferencingEntity;
             string childEntityFieldName = relationshipMetadata.ReferencingAttribute;
 
@@ -68,7 +75,8 @@ namespace Dynamics365.Merge
 
         private void MergeOneToManyRelationship()
         {
-            
+            OnFunctionCalled?.Invoke(this, nameof(MergeOneToManyRelationship));
+
             foreach (var item in MetaData.OneToManyRelationships)
             {
                 try
@@ -94,15 +102,15 @@ namespace Dynamics365.Merge
                 }
                 catch (Exception e)
                 {
-
                     continue;
                 }
-                
             }
         }
 
         private protected EntityCollection RetrieveManyToManyRecords(ManyToManyRelationshipMetadata manyToMany, EntityReference target)
         {
+            OnFunctionCalled?.Invoke(this, nameof(RetrieveManyToManyRecords));
+
             QueryExpression query = new QueryExpression((manyToMany.Entity1LogicalName == LogicalName ? manyToMany.Entity2LogicalName : manyToMany.Entity1LogicalName));
             LinkEntity linkEntity1 = new LinkEntity
             (
@@ -122,7 +130,6 @@ namespace Dynamics365.Merge
                 JoinOperator.Inner
             );
 
-
             linkEntity1.LinkEntities.Add(linkEntity2);
 
             query.LinkEntities.Add(linkEntity1);
@@ -134,8 +141,11 @@ namespace Dynamics365.Merge
 
             return orgService.RetrieveMultiple(query);
         }
+
         private protected void AssociateManyToManyEntityRecords(EntityReference entity1, EntityCollection collection, string entityRelationshipName)
         {
+            OnFunctionCalled?.Invoke(this, nameof(AssociateManyToManyEntityRecords));
+
             try
             {
                 foreach (var entity2 in collection.Entities)
@@ -155,8 +165,11 @@ namespace Dynamics365.Merge
                 throw e.InnerException;
             }
         }
+
         private void MergeManyToManyRecords()
         {
+            OnFunctionCalled?.Invoke(this, nameof(MergeManyToManyRecords));
+
             foreach (var item in MetaData.ManyToManyRelationships)
             {
                 try
@@ -167,10 +180,8 @@ namespace Dynamics365.Merge
                 }
                 catch (Exception e)
                 {
-
                     continue;
                 }
-                
             }
         }
 
@@ -178,11 +189,14 @@ namespace Dynamics365.Merge
         {
             QueryExpression source = new QueryExpression(LogicalName);
             source.ColumnSet = new ColumnSet(true);
-            source.Criteria.AddCondition(LogicalName+"id", ConditionOperator.Equal, guid);
+            source.Criteria.AddCondition(LogicalName + "id", ConditionOperator.Equal, guid);
             EntityCollection entity = orgService.RetrieveMultiple(source);
+            if (entity.Entities.Count == 0)
+                throw new Exception($"Entity with guid: {guid.ToString()} Not Found");
             return entity.Entities[0];
         }
-        private void DeactivateRecord (Entity entity)
+
+        private void DeactivateRecord(Entity entity)
         {
             //StateCode = 1 and StatusCode = 2 for deactivating Account or Contact
             SetStateRequest setStateRequest = new SetStateRequest()
@@ -197,15 +211,17 @@ namespace Dynamics365.Merge
             };
             orgService.Execute(setStateRequest);
         }
+
         private void MergeFields()
         {
+            OnFunctionCalled?.Invoke(this, nameof(MergeFields));
+
             Entity source = GetEntity(this.SourceId);
             Entity target = GetEntity(this.TargetId);
 
             AttributeCollection columns = source.Attributes;
             foreach (var att in columns)
             {
-
                 if (!target.Contains(att.Key) && source.Contains(att.Key))
                 {
                     if (FillNullsOnTargetFromSource)
@@ -217,21 +233,18 @@ namespace Dynamics365.Merge
                         continue;
                     }
                 }
-
             }
             DeactivateRecord(source);
             orgService.Update(target);
-
         }
+
         public void DoMerge()
         {
             GetEntityMetaData(LogicalName);
             MergeOneToManyRelationship();
             MergeManyToManyRecords();
             MergeFields();
-
         }
-
     }
     public class Merge : CodeActivity
     {
@@ -241,12 +254,10 @@ namespace Dynamics365.Merge
 
         [Input("Source Id")]
         [RequiredArgument]
-
         public InArgument<string> SourceId { get; set; }
 
         [Input("Target Id")]
         [RequiredArgument]
-
         public InArgument<string> TargetId { get; set; }
 
         private IOrganizationService orgService;
@@ -266,36 +277,6 @@ namespace Dynamics365.Merge
 
             MergeRequest merge = new MergeRequest(LogicalName, sourceId, targetId, orgService, true);
             merge.DoMerge();
-
-
         }
-
-
     }
 }
-
-/*
- // Create the target for the request.
-            var target = new EntityReference
-            {
-                // Id is the GUID of the account that is being merged into.
-                // LogicalName is the type of the entity being merged to, as a string
-                Id = new Guid(context.GetValue(this.SourceId)),
-                LogicalName = context.GetValue(this.SourceLogicalName)
-            };
-            // Create the request.
-            var merge = new MergeRequest
-            {
-                // SubordinateId is the GUID of the account merging.
-                SubordinateId = new Guid(context.GetValue(this.TargetId)),
-                Target = target,
-                PerformParentingChecks = false
-            };
-            var updateContent = new Entity(context.GetValue(this.SourceLogicalName));
-            updateContent.Attributes.Add("trip_address","test");
-            merge.UpdateContent = updateContent;
-
-
-            // Execute the request.
-            _ = (MergeResponse)orgService.Execute(merge);
- */
