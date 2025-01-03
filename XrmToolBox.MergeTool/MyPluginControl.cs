@@ -31,7 +31,7 @@ namespace XrmToolBox.MergeTool
 
         private void MyPluginControl_Load(object sender, EventArgs e)
         {
-            ShowInfoNotification("This is a notification that can lead to XrmToolBox repository", new Uri("https://github.com/MscrmTools/XrmToolBox"));
+            ShowInfoNotification("This is my first tool published on XrmToolBox. Feel free to send me your feedback", new Uri("mailto:r.xaleghi@gmail.com"));
 
             // Loads or creates the settings for the plugin
             if (!SettingsManager.Instance.TryLoad(GetType(), out mySettings))
@@ -98,10 +98,16 @@ namespace XrmToolBox.MergeTool
         {
             var searchText = txtSearch.Text.ToLower();
             var filteredRows = entitiesTable.AsEnumerable()
-                .Where(row => row.Field<string>("Name").ToLower().Contains(searchText) || row.Field<string>("Logical Name").ToLower().Contains(searchText))
-                .CopyToDataTable();
+                .Where(row => row.Field<string>("Name").ToLower().Contains(searchText) || row.Field<string>("Logical Name").ToLower().Contains(searchText));
 
-            dataGridViewEntities.DataSource = filteredRows;
+            if (filteredRows.Any())
+            {
+                dataGridViewEntities.DataSource = filteredRows.CopyToDataTable();
+            }
+            else
+            {
+                dataGridViewEntities.DataSource = entitiesTable.Clone(); // Clear the DataGridView if no rows are found
+            }
         }
 
         private void RemoveText(object sender, EventArgs e)
