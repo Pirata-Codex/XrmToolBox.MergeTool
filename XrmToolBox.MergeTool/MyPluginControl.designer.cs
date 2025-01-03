@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Windows.Forms;
+
 namespace XrmToolBox.MergeTool
 {
     partial class MyPluginControl
@@ -13,11 +15,12 @@ namespace XrmToolBox.MergeTool
         private System.Windows.Forms.DataGridView dataGridViewExcel;
         private System.Windows.Forms.TextBox txtSearch;
         private System.Windows.Forms.TextBox txtFilePath;
+        private System.Windows.Forms.TextBox txtErrorCount;
+        private System.Windows.Forms.TextBox txtTotalCount;
         private System.Windows.Forms.ProgressBar progressBar;
         private System.Windows.Forms.Label lblProgress;
         private System.Windows.Forms.Label lblReport;
-        private System.Windows.Forms.Label lblValidationStatus;
-        private System.Windows.Forms.TextBox txtLogicalName;
+        //private System.Windows.Forms.Label lblValidationStatus;
 
         protected override void Dispose(bool disposing)
         {
@@ -28,6 +31,7 @@ namespace XrmToolBox.MergeTool
             base.Dispose(disposing);
         }
 
+        // Adjust the layout in InitializeComponent method
         private void InitializeComponent()
         {
             this.toolStripMenu = new System.Windows.Forms.ToolStrip();
@@ -42,8 +46,9 @@ namespace XrmToolBox.MergeTool
             this.progressBar = new System.Windows.Forms.ProgressBar();
             this.lblProgress = new System.Windows.Forms.Label();
             this.lblReport = new System.Windows.Forms.Label();
-            this.lblValidationStatus = new System.Windows.Forms.Label();
-            this.txtLogicalName = new System.Windows.Forms.TextBox();
+            this.txtErrorCount = new System.Windows.Forms.TextBox();
+            this.txtTotalCount = new System.Windows.Forms.TextBox();
+            //this.txtLogicalName = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewEntities)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewExcel)).BeginInit();
             this.toolStripMenu.SuspendLayout();
@@ -105,28 +110,29 @@ namespace XrmToolBox.MergeTool
             // dataGridViewEntities
             // 
             this.dataGridViewEntities.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridViewEntities.Location = new System.Drawing.Point(12, 72);
+            this.dataGridViewEntities.Location = new System.Drawing.Point(12, 97);
             this.dataGridViewEntities.Name = "dataGridViewEntities";
             this.dataGridViewEntities.RowHeadersWidth = 62;
             this.dataGridViewEntities.RowTemplate.Height = 28;
-            this.dataGridViewEntities.Size = new System.Drawing.Size(400, 150);
+            this.dataGridViewEntities.Size = new System.Drawing.Size(400, 400); // Adjusted height
             this.dataGridViewEntities.TabIndex = 1;
             this.dataGridViewEntities.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this.dataGridViewEntities.Columns.Add(new DataGridViewCheckBoxColumn { HeaderText = "Select", Width = 50 });
             // 
             // dataGridViewExcel
             // 
             this.dataGridViewExcel.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridViewExcel.Location = new System.Drawing.Point(418, 72);
+            this.dataGridViewExcel.Location = new System.Drawing.Point(418, 97);
             this.dataGridViewExcel.Name = "dataGridViewExcel";
             this.dataGridViewExcel.RowHeadersWidth = 62;
             this.dataGridViewExcel.RowTemplate.Height = 28;
-            this.dataGridViewExcel.Size = new System.Drawing.Size(400, 150);
+            this.dataGridViewExcel.Size = new System.Drawing.Size(400, 400); // Adjusted height
             this.dataGridViewExcel.TabIndex = 2;
             this.dataGridViewExcel.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             // 
             // txtSearch
             // 
-            this.txtSearch.Location = new System.Drawing.Point(12, 40);
+            this.txtSearch.Location = new System.Drawing.Point(12, 65);
             this.txtSearch.Name = "txtSearch";
             this.txtSearch.Size = new System.Drawing.Size(200, 26);
             this.txtSearch.TabIndex = 3;
@@ -139,7 +145,7 @@ namespace XrmToolBox.MergeTool
             // 
             // txtFilePath
             // 
-            this.txtFilePath.Location = new System.Drawing.Point(12, 228);
+            this.txtFilePath.Location = new System.Drawing.Point(418, 65);
             this.txtFilePath.Name = "txtFilePath";
             this.txtFilePath.Size = new System.Drawing.Size(200, 26);
             this.txtFilePath.TabIndex = 4;
@@ -147,15 +153,15 @@ namespace XrmToolBox.MergeTool
             // 
             // progressBar
             // 
-            this.progressBar.Location = new System.Drawing.Point(12, 260);
+            this.progressBar.Location = new System.Drawing.Point(12, 505);
             this.progressBar.Name = "progressBar";
-            this.progressBar.Size = new System.Drawing.Size(815, 23);
+            this.progressBar.Size = new System.Drawing.Size(800, 23);
             this.progressBar.TabIndex = 5;
             // 
             // lblProgress
             // 
             this.lblProgress.AutoSize = true;
-            this.lblProgress.Location = new System.Drawing.Point(12, 286);
+            this.lblProgress.Location = new System.Drawing.Point(12, 531);
             this.lblProgress.Name = "lblProgress";
             this.lblProgress.Size = new System.Drawing.Size(0, 20);
             this.lblProgress.TabIndex = 6;
@@ -163,33 +169,43 @@ namespace XrmToolBox.MergeTool
             // lblReport
             // 
             this.lblReport.AutoSize = true;
-            this.lblReport.Location = new System.Drawing.Point(12, 310);
+            this.lblReport.Location = new System.Drawing.Point(418, 500);
             this.lblReport.Name = "lblReport";
             this.lblReport.Size = new System.Drawing.Size(0, 20);
             this.lblReport.TabIndex = 7;
             // 
-            // lblValidationStatus
+            // txtErrorCount
             // 
-            this.lblValidationStatus.AutoSize = true;
-            this.lblValidationStatus.Location = new System.Drawing.Point(12, 334);
-            this.lblValidationStatus.Name = "lblValidationStatus";
-            this.lblValidationStatus.Size = new System.Drawing.Size(0, 20);
-            this.lblValidationStatus.TabIndex = 8;
+            this.txtErrorCount.Location = new System.Drawing.Point(418, 530);
+            this.txtErrorCount.Name = "txtErrorCount";
+            this.txtErrorCount.Size = new System.Drawing.Size(100, 26);
+            this.txtErrorCount.TabIndex = 8;
+            this.txtErrorCount.ReadOnly = true;
+            this.txtErrorCount.BackColor = System.Drawing.Color.LightCoral;
+            // 
+            // txtTotalCount
+            // 
+            this.txtTotalCount.Location = new System.Drawing.Point(524, 530);
+            this.txtTotalCount.Name = "txtTotalCount";
+            this.txtTotalCount.Size = new System.Drawing.Size(100, 26);
+            this.txtTotalCount.TabIndex = 9;
+            this.txtTotalCount.ReadOnly = true;
             // 
             // txtLogicalName
             // 
-            this.txtLogicalName.Location = new System.Drawing.Point(12, 12);
-            this.txtLogicalName.Name = "txtLogicalName";
-            this.txtLogicalName.Size = new System.Drawing.Size(260, 26);
-            this.txtLogicalName.TabIndex = 9;
-            this.txtLogicalName.Text = "Logical Name";
+            //this.txtLogicalName.Location = new System.Drawing.Point(12, 37);
+            //this.txtLogicalName.Name = "txtLogicalName";
+            //this.txtLogicalName.Size = new System.Drawing.Size(260, 26);
+            //this.txtLogicalName.TabIndex = 10;
+            //this.txtLogicalName.Text = "Logical Name";
             // 
             // MyPluginControl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.txtLogicalName);
-            this.Controls.Add(this.lblValidationStatus);
+            //this.Controls.Add(this.txtLogicalName);
+            this.Controls.Add(this.txtTotalCount);
+            this.Controls.Add(this.txtErrorCount);
             this.Controls.Add(this.lblReport);
             this.Controls.Add(this.lblProgress);
             this.Controls.Add(this.progressBar);
@@ -199,8 +215,9 @@ namespace XrmToolBox.MergeTool
             this.Controls.Add(this.dataGridViewEntities);
             this.Controls.Add(this.toolStripMenu);
             this.Name = "MyPluginControl";
-            this.Size = new System.Drawing.Size(830, 360);
+            this.Size = new System.Drawing.Size(830, 610); // Adjusted height
             this.Load += new System.EventHandler(this.MyPluginControl_Load);
+            this.Resize += new System.EventHandler(this.MyPluginControl_Resize);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewEntities)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewExcel)).EndInit();
             this.toolStripMenu.ResumeLayout(false);
@@ -208,5 +225,27 @@ namespace XrmToolBox.MergeTool
             this.ResumeLayout(false);
             this.PerformLayout();
         }
+
+        private void MyPluginControl_Resize(object sender, EventArgs e)
+        {
+            int width = this.ClientSize.Width;
+            int height = this.ClientSize.Height;
+
+            dataGridViewEntities.Width = (width / 2) - 20;
+            dataGridViewEntities.Height = height - 150;
+
+            dataGridViewExcel.Width = (width / 2) - 20;
+            dataGridViewExcel.Height = height - 150;
+
+            dataGridViewExcel.Left = dataGridViewEntities.Right + 10;
+
+            progressBar.Width = width - 20;
+            progressBar.Top = height - 50;
+
+            lblReport.Top = dataGridViewExcel.Bottom + 10;
+            txtErrorCount.Top = lblReport.Bottom + 10;
+            txtTotalCount.Top = lblReport.Bottom + 10;
+        }
+
     }
 }

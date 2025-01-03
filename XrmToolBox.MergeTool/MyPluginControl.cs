@@ -165,61 +165,92 @@ namespace XrmToolBox.MergeTool
                 return;
             }
 
-            lblValidationStatus.Text = "Validating...";
             excelTable = new DataTable();
             errorRows = new List<string>();
 
-            using (var package = new ExcelPackage(new FileInfo(filePath)))
+            WorkAsync(new WorkAsyncInfo
             {
-                var worksheet = package.Workbook.Worksheets[0];
-                int rowCount = worksheet.Dimension.Rows;
-
-                excelTable.Columns.Add("SourceId");
-                excelTable.Columns.Add("TargetId");
-                excelTable.Columns.Add("Status");
-
-                for (int row = 2; row <= rowCount; row++)
+                Message = "Validating Excel file...",
+                Work = (worker, args) =>
                 {
-                    var sourceId = worksheet.Cells[row, 1].Text;
-                    var targetId = worksheet.Cells[row, 2].Text;
-
-                    var rowToAdd = excelTable.NewRow();
-                    rowToAdd["SourceId"] = sourceId;
-                    rowToAdd["TargetId"] = targetId;
-
-                    if (Guid.TryParse(sourceId, out _) && Guid.TryParse(targetId, out _))
+                    using (var package = new ExcelPackage(new FileInfo(filePath)))
                     {
-                        if (EntityExists(sourceId) && EntityExists(targetId))
+                        var worksheet = package.Workbook.Worksheets[0];
+                        int rowCount = worksheet.Dimension.Rows;
+
+                        excelTable.Columns.Add("SourceId");
+                        excelTable.Columns.Add("TargetId");
+                        excelTable.Columns.Add("Status");
+
+                        for (int row = 1; row <= rowCount; row++)
                         {
-                            rowToAdd["Status"] = "Valid";
-                        }
-                        else
-                        {
+                            var sourceId = worksheet.Cells[row, 1].Text;
+                            var targetId = worksheet.Cells[row, 2].Text;
+
+                            var rowToAdd = excelTable.NewRow();
+                            rowToAdd["SourceId"] = sourceId;
+                            rowToAdd["TargetId"] = targetId;
                             rowToAdd["Status"] = "Invalid";
-                            errorRows.Add($"Row {row}: Entity does not exist.");
+
+                            if (Guid.TryParse(sourceId, out _) && Guid.TryParse(targetId, out _))
+                            {
+                                if (EntityExists(sourceId) && EntityExists(targetId))
+                                {
+                                    rowToAdd["Status"] = "Valid";
+                                }
+                                else
+                                {
+                                    rowToAdd["Status"] = "Invalid";
+                                    errorRows.Add($"Row {row}: Entity does not exist.");
+                                }
+                            }
+                            else
+                            {
+                                rowToAdd["Status"] = "Invalid";
+                                errorRows.Add($"Row {row}: Invalid GUID format.");
+                            }
+
+                            excelTable.Rows.Add(rowToAdd);
+                            worker.ReportProgress((row) * 100 / (rowCount), $"Validating row {row} of {rowCount}");
                         }
+                    }
+                    args.Result = excelTable;
+                },
+                ProgressChanged = (args) =>
+                {
+                    progressBar.Value = args.ProgressPercentage;
+                    lblProgress.Text = args.UserState.ToString();
+                },
+                PostWorkCallBack = (args) =>
+                {
+                    if (args.Error != null)
+                    {
+                        MessageBox.Show(args.Error.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                     else
                     {
-                        rowToAdd["Status"] = "Invalid";
-                        errorRows.Add($"Row {row}: Invalid GUID format.");
+                        dataGridViewExcel.DataSource = args.Result;
+                        HighlightRows();
+                        ShowReport();
+                        btnMerge.Enabled = true;
                     }
-
-                    excelTable.Rows.Add(rowToAdd);
                 }
-            }
-
-            dataGridViewExcel.DataSource = excelTable;
-            HighlightRows();
-            ShowReport();
-            lblValidationStatus.Text = "Validation complete";
-            btnMerge.Enabled = true;
+            });
         }
 
         private bool EntityExists(string id)
         {
-            QueryExpression query = new QueryExpression(txtLogicalName.Text);
-            query.Criteria.AddCondition($"{txtLogicalName.Text}id", ConditionOperator.Equal, new Guid(id));
+            if (dataGridViewEntities.SelectedRows.Count == 0)
+            {
+                MessageBox.Show("Please select an entity.");
+                return false;
+            }
+
+            var selectedRow = dataGridViewEntities.SelectedRows[0];
+            var logicalName = selectedRow.Cells["Logical Name"].Value.ToString();
+
+            QueryExpression query = new QueryExpression(logicalName);
+            query.Criteria.AddCondition($"{logicalName}id", ConditionOperator.Equal, new Guid(id));
             query.NoLock = true;
             var entity = Service.RetrieveMultiple(query);
             return entity.Entities.Count == 1;
@@ -229,14 +260,24 @@ namespace XrmToolBox.MergeTool
         {
             foreach (DataGridViewRow row in dataGridViewExcel.Rows)
             {
-                if (row.Cells["Status"].Value.ToString() == "Valid")
+                try
                 {
-                    row.DefaultCellStyle.BackColor = Color.LightGreen;
+                    if (row.Cells["Status"].Value.ToString() == "Valid")
+                    {
+                        row.DefaultCellStyle.BackColor = Color.LightGreen;
+                    }
+                    else
+                    {
+                        row.DefaultCellStyle.BackColor = Color.LightCoral;
+                    }
                 }
-                else
+                catch (Exception)
                 {
                     row.DefaultCellStyle.BackColor = Color.LightCoral;
+                    continue;
+                    throw;
                 }
+                
             }
         }
 
@@ -246,6 +287,8 @@ namespace XrmToolBox.MergeTool
             int errorRowsCount = errorRows.Count;
 
             lblReport.Text = $"Total Rows: {totalRows}, Rows with Errors: {errorRowsCount}";
+            txtTotalCount.Text = totalRows.ToString();
+            txtErrorCount.Text = errorRowsCount.ToString();
         }
 
         private void GenerateErrorReport()
@@ -332,6 +375,7 @@ namespace XrmToolBox.MergeTool
                     if (args.Error != null)
                     {
                         MessageBox.Show(args.Error.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        GenerateErrorReport();
                     }
                     else
                     {
@@ -349,40 +393,6 @@ namespace XrmToolBox.MergeTool
         private void tsbClose_Click(object sender, EventArgs e)
         {
             CloseTool();
-        }
-
-        private void tsbSample_Click(object sender, EventArgs e)
-        {
-            // The ExecuteMethod method handles connecting to an
-            // organization if XrmToolBox is not yet connected
-            ExecuteMethod(GetAccounts);
-        }
-
-        private void GetAccounts()
-        {
-            WorkAsync(new WorkAsyncInfo
-            {
-                Message = "Getting accounts",
-                Work = (worker, args) =>
-                {
-                    args.Result = Service.RetrieveMultiple(new QueryExpression("account")
-                    {
-                        TopCount = 50
-                    });
-                },
-                PostWorkCallBack = (args) =>
-                {
-                    if (args.Error != null)
-                    {
-                        MessageBox.Show(args.Error.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                    var result = args.Result as EntityCollection;
-                    if (result != null)
-                    {
-                        MessageBox.Show($"Found {result.Entities.Count} accounts");
-                    }
-                }
-            });
         }
 
         /// <summary>
@@ -409,5 +419,6 @@ namespace XrmToolBox.MergeTool
                 LogInfo("Connection has changed to: {0}", detail.WebApplicationUrl);
             }
         }
+
     }
 }
