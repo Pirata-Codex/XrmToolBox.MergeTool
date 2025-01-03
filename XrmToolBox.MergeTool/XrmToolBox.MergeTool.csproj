@@ -204,12 +204,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="MergeControl.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="MergeControl.Designer.cs">
-      <DependentUpon>MergeControl.cs</DependentUpon>
-    </Compile>
     <Compile Include="MyPlugin.cs" />
     <Compile Include="MyPluginControl.cs">
       <SubType>UserControl</SubType>

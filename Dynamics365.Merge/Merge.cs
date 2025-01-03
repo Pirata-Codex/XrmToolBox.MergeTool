@@ -100,7 +100,7 @@ namespace Dynamics365.Merge
                         }
                     }
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     continue;
                 }
@@ -178,7 +178,7 @@ namespace Dynamics365.Merge
                     EntityCollection records = RetrieveManyToManyRecords(item, new EntityReference(LogicalName, SourceId));
                     AssociateManyToManyEntityRecords(new EntityReference(LogicalName, TargetId), records, item.SchemaName);
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     continue;
                 }
