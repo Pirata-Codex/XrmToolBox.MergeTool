@@ -252,6 +252,7 @@
       <Project>{69140922-c590-4b6a-9cfd-7b080c8c5568}</Project>
       <Name>Dynamics365.Merge</Name>
     </ProjectReference>
+  <PackageReference Include="Dynamics365.MergeTool" Version="1.0.0" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="MyPluginControl.resx">
