@@ -25,6 +25,7 @@ namespace XrmToolBox.MergeTool
         private DataTable entitiesTable;
         private DataTable excelTable;
         private List<string> errorRows;
+        private int _startingrow = 1;
 
         public MyPluginControl()
         {
@@ -55,6 +56,7 @@ namespace XrmToolBox.MergeTool
                 MessageBox.Show("Please connect to an organization service first.", "No Connection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
+            // Enable the DataGridView for editing after loading entities
 
             LoadEntities();
         }
@@ -100,6 +102,8 @@ namespace XrmToolBox.MergeTool
                             dataGridViewEntities.DataSource = entitiesTable;
                             txtSearch.Enabled = true;
                             btnLoadExcel.Enabled = true;
+                            dataGridViewEntities.ReadOnly = false;
+                            dataGridViewEntities.Enabled = true;
                         }
                     }
                 }
@@ -109,6 +113,16 @@ namespace XrmToolBox.MergeTool
         private void txtSearch_TextChanged(object sender, EventArgs e)
         {
             if (entitiesTable == null) return;
+
+            // Remove rows with empty "Logical Name" values
+            var rowsToRemove = entitiesTable.AsEnumerable()
+                .Where(row => string.IsNullOrEmpty(row.Field<string>("Logical Name")))
+                .ToList();
+
+            foreach (var row in rowsToRemove)
+            {
+                entitiesTable.Rows.Remove(row);
+            }
 
             var searchText = txtSearch.Text.ToLower();
             var filteredRows = entitiesTable.AsEnumerable()
@@ -154,7 +168,29 @@ namespace XrmToolBox.MergeTool
                 }
             }
         }
+        private HashSet<Guid> CheckEntityExistence(HashSet<Guid> guids)
+        {
+            var logicalName = EntityLogicalName();
+            if (logicalName == null)
+            {
+                return new HashSet<Guid>();
+            }
 
+            var query = new QueryExpression(logicalName)
+            {
+                ColumnSet = new ColumnSet(false),
+                Criteria = new FilterExpression
+                {
+                    Conditions =
+            {
+                new ConditionExpression($"{logicalName}id", ConditionOperator.In, guids.ToArray())
+            }
+                }
+            };
+
+            var entities = Service.RetrieveMultiple(query).Entities;
+            return new HashSet<Guid>(entities.Select(e => e.Id));
+        }
         private void btnValidateExcel_Click(object sender, EventArgs e)
         {
             string filePath = txtFilePath.Text;
@@ -165,14 +201,20 @@ namespace XrmToolBox.MergeTool
                 return;
             }
 
+            if (EntityLogicalName() == null)
+            {
+                MessageBox.Show("Please select an entity.");
+                return;
+            }
+
             excelTable = new DataTable();
             errorRows = new List<string>();
-
             WorkAsync(new WorkAsyncInfo
             {
                 Message = "Validating Excel file...",
                 Work = (worker, args) =>
                 {
+                    worker.WorkerReportsProgress = true;
                     using (var package = new ExcelPackage(new FileInfo(filePath)))
                     {
                         var worksheet = package.Workbook.Worksheets[0];
@@ -182,7 +224,26 @@ namespace XrmToolBox.MergeTool
                         excelTable.Columns.Add("TargetId");
                         excelTable.Columns.Add("Status");
 
-                        for (int row = 1; row <= rowCount; row++)
+                        var guidsToCheck = new HashSet<Guid>();
+
+                        for (int row = _startingrow; row <= rowCount; row++)
+                        {
+                            var sourceId = worksheet.Cells[row, 1].Text;
+                            var targetId = worksheet.Cells[row, 2].Text;
+
+                            if (Guid.TryParse(sourceId, out var sourceGuid))
+                            {
+                                guidsToCheck.Add(sourceGuid);
+                            }
+                            if (Guid.TryParse(targetId, out var targetGuid))
+                            {
+                                guidsToCheck.Add(targetGuid);
+                            }
+                        }
+
+                        var existingGuids = CheckEntityExistence(guidsToCheck);
+
+                        for (int row = _startingrow; row <= rowCount; row++)
                         {
                             var sourceId = worksheet.Cells[row, 1].Text;
                             var targetId = worksheet.Cells[row, 2].Text;
@@ -192,16 +253,16 @@ namespace XrmToolBox.MergeTool
                             rowToAdd["TargetId"] = targetId;
                             rowToAdd["Status"] = "Invalid";
 
-                            if (Guid.TryParse(sourceId, out _) && Guid.TryParse(targetId, out _))
+                            if (Guid.TryParse(sourceId, out var sourceGuid) && Guid.TryParse(targetId, out var targetGuid))
                             {
-                                if (EntityExists(sourceId) && EntityExists(targetId))
+                                if (existingGuids.Contains(sourceGuid) && existingGuids.Contains(targetGuid))
                                 {
                                     rowToAdd["Status"] = "Valid";
                                 }
                                 else
                                 {
                                     rowToAdd["Status"] = "Invalid";
-                                    errorRows.Add($"Row {row}: Entity does not exist.");
+                                    errorRows.Add($"Row {row}: Record does not exist.");
                                 }
                             }
                             else
@@ -237,17 +298,28 @@ namespace XrmToolBox.MergeTool
             });
         }
 
-        private bool EntityExists(string id)
+        private string EntityLogicalName()
         {
-            if (dataGridViewEntities.SelectedRows.Count == 0)
+            foreach (DataGridViewRow row in dataGridViewEntities.Rows)
             {
-                MessageBox.Show("Please select an entity.");
-                return false;
+                var cell = row.Cells["Select"] as DataGridViewCheckBoxCell;
+                if (cell != null && cell.Selected)
+                {
+                    return row.Cells["Logical Name"].Value.ToString();
+                }
             }
 
-            var selectedRow = dataGridViewEntities.SelectedRows[0];
-            var logicalName = selectedRow.Cells["Logical Name"].Value.ToString();
+            return null;
+        }
 
+        private bool EntityExists(string id)
+        {
+
+            var logicalName = EntityLogicalName();
+            if (logicalName == null)
+            {
+                return false;
+            }
             QueryExpression query = new QueryExpression(logicalName);
             query.Criteria.AddCondition($"{logicalName}id", ConditionOperator.Equal, new Guid(id));
             query.NoLock = true;
@@ -272,7 +344,6 @@ namespace XrmToolBox.MergeTool
                 }
                 catch (Exception)
                 {
-                    row.DefaultCellStyle.BackColor = Color.LightCoral;
                     continue;
                     throw;
                 }
@@ -292,95 +363,140 @@ namespace XrmToolBox.MergeTool
 
         private void GenerateErrorReport()
         {
-            using (var package = new ExcelPackage())
+            var result = MessageBox.Show("Do you want to save the error report?", "Save Error Report", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (result == DialogResult.Yes)
             {
-                var worksheet = package.Workbook.Worksheets.Add("Error Report");
-
-                worksheet.Cells[1, 1].Value = "Row";
-                worksheet.Cells[1, 2].Value = "Error";
-
-                for (int i = 0; i < errorRows.Count; i++)
+                using (var package = new ExcelPackage())
                 {
-                    worksheet.Cells[i + 2, 1].Value = errorRows[i].Split(':')[0];
-                    worksheet.Cells[i + 2, 2].Value = errorRows[i].Split(':')[1];
+                    var worksheet = package.Workbook.Worksheets.Add("Error Report");
+
+                    worksheet.Cells[1, 1].Value = "Row No.";
+                    worksheet.Cells[1, 2].Value = "Error Message";
+
+                    for (int i = 0; i < errorRows.Count; i++)
+                    {
+                        var errorRow = errorRows[i].Split(':');
+                        worksheet.Cells[i + 2, 1].Value = errorRow[0]; // Original row number
+                        worksheet.Cells[i + 2, 2].Value = errorRow[1]; // Error message
+                    }
+
+                    var saveFileDialog = new SaveFileDialog
+                    {
+                        Filter = "Excel Files|*.xlsx;*.xls",
+                        FileName = $"ErrorReport-{DateTime.Now:yyyyMMddHHmmss}.xlsx"
+                    };
+
+                    if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                    {
+                        package.SaveAs(new FileInfo(saveFileDialog.FileName));
+                    }
                 }
+            }
+        }
+        private void btnHelp_Click(object sender, EventArgs e)
+        {
+            string tutorialMessage = "Tutorial on how to use the tool:\n\n" +
+                                     "1. Load Entities: Click to load the entities.\n" +
+                                     "2. Load Excel: Click to load the Excel file.\n" +
+                                     "3. Validate Excel: Click to validate the loaded Excel data.\n" +
+                                     "4. Merge: Click to merge the data.\n" +
+                                     "Use the search box to filter entities.\n" +
+                                     "Check the progress and report in the footer panel.\n\n" +
+                                     "Standard Excel Format (Add no header or table):\n" +
+                                     "1. Column A: source GUID\n" +
+                                     "2. Column B: mergeTo GUID\n" +
+                                     "Press Ok to see an example";
+            MessageBox.Show(tutorialMessage, "Help - Tutorial", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                var saveFileDialog = new SaveFileDialog
+            // Save the image from resources to a temporary file and open it
+            string tempFilePath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "tutorial_image.png");
+            try
+            {
+                using (var image = Properties.Resources.help) // Replace with your actual resource name
                 {
-                    Filter = "Excel Files|*.xlsx;*.xls",
-                    FileName = $"ErrorReport-{DateTime.Now:yyyyMMddHHmmss}.xlsx"
-                };
-
-                if (saveFileDialog.ShowDialog() == DialogResult.OK)
-                {
-                    package.SaveAs(new FileInfo(saveFileDialog.FileName));
+                    image.Save(tempFilePath);
                 }
+                System.Diagnostics.Process.Start(tempFilePath);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Unable to open image: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         private void btnMerge_Click(object sender, EventArgs e)
         {
-            if (dataGridViewEntities.SelectedRows.Count == 0)
+            var result = MessageBox.Show("Are you sure to start the merge process? Note that log for every row will be reported.", "Merge Process", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (result == DialogResult.Yes)
             {
-                MessageBox.Show("Please select an entity.");
-                return;
-            }
 
-            if (string.IsNullOrEmpty(txtFilePath.Text) || !File.Exists(txtFilePath.Text))
-            {
-                MessageBox.Show("Please select a valid Excel file.");
-                return;
-            }
 
-            var selectedRow = dataGridViewEntities.SelectedRows[0];
-            var logicalName = selectedRow.Cells["Logical Name"].Value.ToString();
-
-            WorkAsync(new WorkAsyncInfo
-            {
-                Message = "Merging records...",
-                Work = (worker, args) =>
+                if (string.IsNullOrEmpty(txtFilePath.Text) || !File.Exists(txtFilePath.Text))
                 {
-                    using (var package = new ExcelPackage(new FileInfo(txtFilePath.Text)))
-                    {
-                        var worksheet = package.Workbook.Worksheets[0];
-                        int rowCount = worksheet.Dimension.Rows;
-                        args.Result = rowCount;
+                    MessageBox.Show("Please select a valid Excel file.");
+                    return;
+                }
 
-                        for (int row = 2; row <= rowCount; row++)
+                var logicalName = EntityLogicalName();
+                if (logicalName == null)
+                {
+                    return;
+                }
+
+                WorkAsync(new WorkAsyncInfo
+                {
+                    Message = "Merging records...",
+                    Work = (worker, args) =>
+                    {
+                        worker.WorkerReportsProgress = true;
+                        using (var package = new ExcelPackage(new FileInfo(txtFilePath.Text)))
                         {
-                            string sourceId = worksheet.Cells[row, 1].Text;
-                            string targetId = worksheet.Cells[row, 2].Text;
-
-                            if (string.IsNullOrEmpty(sourceId) || string.IsNullOrEmpty(targetId))
+                            var worksheet = package.Workbook.Worksheets[0];
+                            int rowCount = worksheet.Dimension.Rows;
+                            args.Result = rowCount;
+                            for (int row = _startingrow; row <= rowCount; row++)
                             {
-                                continue;
+                                string sourceId = worksheet.Cells[row, 1].Text;
+                                string targetId = worksheet.Cells[row, 2].Text;
+
+                                // Only process rows that are marked as "Valid"
+                                var status = excelTable.Rows[row - _startingrow]["Status"].ToString();
+                                if (status != "Valid")
+                                {
+                                    continue;
+                                }
+
+                                if (string.IsNullOrEmpty(sourceId) || string.IsNullOrEmpty(targetId))
+                                {
+                                    continue;
+                                }
+
+                                worker.ReportProgress((row) * 100 / (rowCount), $"Processing row {row} of {rowCount}");
+
+                                MergeRequest mergeRequest = new MergeRequest(logicalName, sourceId, targetId, Service, true);
+                                mergeRequest.OnFunctionCalled += MergeRequest_OnFunctionCalled;
+                                mergeRequest.DoMerge();
                             }
-
-                            worker.ReportProgress((row - 1) * 100 / (rowCount - 1), $"Processing row {row - 1} of {rowCount - 1}");
-
-                            MergeRequest mergeRequest = new MergeRequest(logicalName, sourceId, targetId, Service, true);
-                            mergeRequest.OnFunctionCalled += MergeRequest_OnFunctionCalled;
-                            mergeRequest.DoMerge();
                         }
-                    }
-                },
-                ProgressChanged = (args) =>
-                {
-                    lblProgress.Text = args.UserState.ToString();
-                },
-                PostWorkCallBack = (args) =>
-                {
-                    if (args.Error != null)
+                    },
+                    ProgressChanged = (args) =>
                     {
-                        MessageBox.Show(args.Error.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        lblProgress.Text = args.UserState.ToString();
+                    },
+                    PostWorkCallBack = (args) =>
+                    {
+                        if (args.Error != null)
+                        {
+                            MessageBox.Show(args.Error.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                        else
+                        {
+                            MessageBox.Show("Bulk merge completed successfully.");
+                        }
                         GenerateErrorReport();
                     }
-                    else
-                    {
-                        MessageBox.Show("Bulk merge completed successfully.");
-                    }
-                }
-            });
+                });
+            }
         }
 
         private void MergeRequest_OnFunctionCalled(object sender, string functionName)
