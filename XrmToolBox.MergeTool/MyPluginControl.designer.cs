@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace XrmToolBox.MergeTool
@@ -17,10 +18,10 @@ namespace XrmToolBox.MergeTool
         private System.Windows.Forms.TextBox txtFilePath;
         private System.Windows.Forms.TextBox txtErrorCount;
         private System.Windows.Forms.TextBox txtTotalCount;
-        private System.Windows.Forms.ProgressBar progressBar;
         private System.Windows.Forms.Label lblProgress;
         private System.Windows.Forms.Label lblReport;
-        //private System.Windows.Forms.Label lblValidationStatus;
+        private System.Windows.Forms.Panel footerPanel;
+
 
         protected override void Dispose(bool disposing)
         {
@@ -31,7 +32,6 @@ namespace XrmToolBox.MergeTool
             base.Dispose(disposing);
         }
 
-        // Adjust the layout in InitializeComponent method
         private void InitializeComponent()
         {
             this.toolStripMenu = new System.Windows.Forms.ToolStrip();
@@ -43,12 +43,10 @@ namespace XrmToolBox.MergeTool
             this.dataGridViewExcel = new System.Windows.Forms.DataGridView();
             this.txtSearch = new System.Windows.Forms.TextBox();
             this.txtFilePath = new System.Windows.Forms.TextBox();
-            this.progressBar = new System.Windows.Forms.ProgressBar();
             this.lblProgress = new System.Windows.Forms.Label();
             this.lblReport = new System.Windows.Forms.Label();
             this.txtErrorCount = new System.Windows.Forms.TextBox();
             this.txtTotalCount = new System.Windows.Forms.TextBox();
-            //this.txtLogicalName = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewEntities)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewExcel)).BeginInit();
             this.toolStripMenu.SuspendLayout();
@@ -58,10 +56,10 @@ namespace XrmToolBox.MergeTool
             // 
             this.toolStripMenu.ImageScalingSize = new System.Drawing.Size(24, 24);
             this.toolStripMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-                    this.btnLoadEntities,
-                    this.btnLoadExcel,
-                    this.btnValidateExcel,
-                    this.btnMerge});
+                        this.btnLoadEntities,
+                        this.btnLoadExcel,
+                        this.btnValidateExcel,
+                        this.btnMerge});
             this.toolStripMenu.Location = new System.Drawing.Point(0, 0);
             this.toolStripMenu.Name = "toolStripMenu";
             this.toolStripMenu.Size = new System.Drawing.Size(839, 31);
@@ -118,6 +116,7 @@ namespace XrmToolBox.MergeTool
             this.dataGridViewEntities.TabIndex = 1;
             this.dataGridViewEntities.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dataGridViewEntities.Columns.Add(new DataGridViewCheckBoxColumn { HeaderText = "Select", Width = 50 });
+            this.dataGridViewEntities.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewEntities_CellContentClick);
             // 
             // dataGridViewExcel
             // 
@@ -151,13 +150,6 @@ namespace XrmToolBox.MergeTool
             this.txtFilePath.TabIndex = 4;
             this.txtFilePath.ReadOnly = true;
             // 
-            // progressBar
-            // 
-            this.progressBar.Location = new System.Drawing.Point(12, 505);
-            this.progressBar.Name = "progressBar";
-            this.progressBar.Size = new System.Drawing.Size(800, 23);
-            this.progressBar.TabIndex = 5;
-            // 
             // lblProgress
             // 
             this.lblProgress.AutoSize = true;
@@ -176,44 +168,47 @@ namespace XrmToolBox.MergeTool
             // 
             // txtErrorCount
             // 
-            this.txtErrorCount.Location = new System.Drawing.Point(418, 530);
+            this.txtErrorCount.Location = new System.Drawing.Point(10, 10);
             this.txtErrorCount.Name = "txtErrorCount";
             this.txtErrorCount.Size = new System.Drawing.Size(100, 26);
             this.txtErrorCount.TabIndex = 8;
             this.txtErrorCount.ReadOnly = true;
             this.txtErrorCount.BackColor = System.Drawing.Color.LightCoral;
+            this.txtErrorCount.Font = new Font(this.txtErrorCount.Font, FontStyle.Bold);
+            this.txtErrorCount.Font = new Font(this.txtErrorCount.Font.FontFamily, 12);
             // 
             // txtTotalCount
             // 
-            this.txtTotalCount.Location = new System.Drawing.Point(524, 530);
+            this.txtTotalCount.Location = new System.Drawing.Point(120, 10);
             this.txtTotalCount.Name = "txtTotalCount";
             this.txtTotalCount.Size = new System.Drawing.Size(100, 26);
             this.txtTotalCount.TabIndex = 9;
             this.txtTotalCount.ReadOnly = true;
+            this.txtTotalCount.Font = new Font(this.txtTotalCount.Font, FontStyle.Bold);
+            this.txtTotalCount.Font = new Font(this.txtTotalCount.Font.FontFamily, 12);
             // 
-            // txtLogicalName
+            // Footer Panel
             // 
-            //this.txtLogicalName.Location = new System.Drawing.Point(12, 37);
-            //this.txtLogicalName.Name = "txtLogicalName";
-            //this.txtLogicalName.Size = new System.Drawing.Size(260, 26);
-            //this.txtLogicalName.TabIndex = 10;
-            //this.txtLogicalName.Text = "Logical Name";
+            this.footerPanel = new System.Windows.Forms.Panel();
+            this.footerPanel.Location = new System.Drawing.Point(12, 505);
+            this.footerPanel.Name = "footerPanel";
+            this.footerPanel.Size = new System.Drawing.Size(800, 50);
+            this.footerPanel.TabIndex = 10;
             // 
             // MyPluginControl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            //this.Controls.Add(this.txtLogicalName);
-            this.Controls.Add(this.txtTotalCount);
-            this.Controls.Add(this.txtErrorCount);
             this.Controls.Add(this.lblReport);
             this.Controls.Add(this.lblProgress);
-            this.Controls.Add(this.progressBar);
             this.Controls.Add(this.txtFilePath);
             this.Controls.Add(this.txtSearch);
             this.Controls.Add(this.dataGridViewExcel);
             this.Controls.Add(this.dataGridViewEntities);
             this.Controls.Add(this.toolStripMenu);
+            this.Controls.Add(this.footerPanel);
+            this.footerPanel.Controls.Add(this.txtErrorCount);
+            this.footerPanel.Controls.Add(this.txtTotalCount);
             this.Name = "MyPluginControl";
             this.Size = new System.Drawing.Size(830, 610); // Adjusted height
             this.Load += new System.EventHandler(this.MyPluginControl_Load);
@@ -239,13 +234,23 @@ namespace XrmToolBox.MergeTool
 
             dataGridViewExcel.Left = dataGridViewEntities.Right + 10;
 
-            progressBar.Width = width - 20;
-            progressBar.Top = height - 50;
-
             lblReport.Top = dataGridViewExcel.Bottom + 10;
-            txtErrorCount.Top = lblReport.Bottom + 10;
-            txtTotalCount.Top = lblReport.Bottom + 10;
+            footerPanel.Top = lblReport.Bottom + 10;
         }
 
+        private void dataGridViewEntities_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.ColumnIndex == 0) // Assuming the "Select" column is at index 0
+            {
+                foreach (DataGridViewRow row in dataGridViewEntities.Rows)
+                {
+                    if (row.Index != e.RowIndex)
+                    {
+                        DataGridViewCheckBoxCell checkBox = (DataGridViewCheckBoxCell)row.Cells[0];
+                        checkBox.Value = false;
+                    }
+                }
+            }
+        }
     }
 }

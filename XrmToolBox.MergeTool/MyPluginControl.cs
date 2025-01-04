@@ -218,7 +218,6 @@ namespace XrmToolBox.MergeTool
                 },
                 ProgressChanged = (args) =>
                 {
-                    progressBar.Value = args.ProgressPercentage;
                     lblProgress.Text = args.UserState.ToString();
                 },
                 PostWorkCallBack = (args) =>
@@ -367,7 +366,6 @@ namespace XrmToolBox.MergeTool
                 },
                 ProgressChanged = (args) =>
                 {
-                    progressBar.Value = args.ProgressPercentage;
                     lblProgress.Text = args.UserState.ToString();
                 },
                 PostWorkCallBack = (args) =>
