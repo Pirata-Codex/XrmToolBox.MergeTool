@@ -6,6 +6,8 @@ namespace XrmToolBox.MergeTool
 {
     partial class MyPluginControl
     {
+        private DataGridViewCheckBoxColumn Select;
+
         private System.ComponentModel.IContainer components = null;
         private System.Windows.Forms.ToolStrip toolStripMenu;
         private System.Windows.Forms.ToolStripButton btnLoadEntities;
@@ -291,6 +293,5 @@ namespace XrmToolBox.MergeTool
             }
         }
 
-        private DataGridViewCheckBoxColumn Select;
     }
 }

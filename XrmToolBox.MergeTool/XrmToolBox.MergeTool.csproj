@@ -280,6 +280,12 @@
   <ItemGroup>
     <None Include="Resources\help_icon.png" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\80x80.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\32x32.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>

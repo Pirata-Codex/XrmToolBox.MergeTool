@@ -51,18 +51,17 @@ namespace XrmToolBox.MergeTool
 
         private void btnLoadEntities_Click(object sender, EventArgs e)
         {
+            ExecuteMethod(LoadEntities);
+        }
+
+        private void LoadEntities()
+        {
             if (Service == null)
             {
                 MessageBox.Show("Please connect to an organization service first.", "No Connection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-            // Enable the DataGridView for editing after loading entities
 
-            LoadEntities();
-        }
-
-        private void LoadEntities()
-        {
             WorkAsync(new WorkAsyncInfo
             {
                 Message = "Loading entities...",
