@@ -85,10 +85,10 @@ namespace Dynamics365.Merge
                     EntityCollection relatedRecords = GetRelatedRecordsBasedOnOneToManyRelationshipMetadata(relationshipMetadata, SourceId);
 
                     string referencingAttribute = relationshipMetadata.ReferencingAttribute;
-                    if (!(bool)relationshipMetadata.IsCustomRelationship)
-                    {
-                        continue;
-                    }
+                    //if (!(bool)relationshipMetadata.IsCustomRelationship)
+                    //{
+                    //    continue;
+                    //}
                     foreach (var childEntity in relatedRecords.Entities)
                     {
                         if (relatedRecords.Entities.Count > 1000)
@@ -174,7 +174,7 @@ namespace Dynamics365.Merge
             {
                 try
                 {
-                    if (!(bool)item.IsCustomRelationship) continue;
+                    //if (!(bool)item.IsCustomRelationship) continue;
                     EntityCollection records = RetrieveManyToManyRecords(item, new EntityReference(LogicalName, SourceId));
                     AssociateManyToManyEntityRecords(new EntityReference(LogicalName, TargetId), records, item.SchemaName);
                 }
