@@ -238,15 +238,15 @@ namespace Dynamics365.Merge
                 }
             }
             OrgService.Update(target);
-            try
-            {
-                Helper.DeactivateRecord(source.LogicalName, source.Id);
-                //DeactivateRecord(source);
-            }
-            catch (Exception e)
-            {
-                throw new Exception("Record Merged Successfully but deactivation failed. details: " + e);
-            }
+            //try
+            //{
+            //    Helper.DeactivateRecord(source.LogicalName, source.Id);
+            //    //DeactivateRecord(source);
+            //}
+            //catch (Exception e)
+            //{
+            //    throw new Exception("Record Merged Successfully but deactivation failed. details: " + e);
+            //}
         }
 
         public void DoMerge()
