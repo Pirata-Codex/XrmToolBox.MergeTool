@@ -1,5 +1,13 @@
 # Record Merge Tool for Dynamics 365
 
+[![NuGet Downloads](https://img.shields.io/nuget/dt/Dynamics365.MergeTool?label=Downloads&color=blue)](https://www.nuget.org/packages/Dynamics365.MergeTool)
+[![NuGet Version](https://img.shields.io/nuget/v/Dynamics365.MergeTool?label=NuGet&color=brightgreen)](https://www.nuget.org/packages/Dynamics365.MergeTool)
+[![GitHub Repo stars](https://img.shields.io/github/stars/Pirata-Codex/XrmToolBox.MergeTool?style=social)](https://github.com/Pirata-Codex/XrmToolBox.MergeTool)
+[![License](https://img.shields.io/github/license/Pirata-Codex/XrmToolBox.MergeTool)](https://github.com/Pirata-Codex/XrmToolBox.MergeTool/blob/main/LICENSE)
+[![GitHub issues](https://img.shields.io/github/issues/Pirata-Codex/XrmToolBox.MergeTool)](https://github.com/Pirata-Codex/XrmToolBox.MergeTool/issues)
+
+🚀 A powerful tool to manage merging records in Dynamics 365.
+
 ## Overview
 
 The Record Merge Tool is a comprehensive plugin for XrmToolBox designed to facilitate the merging of out-of-the-box and custom entity records in Dynamics 365. This tool allows users to load entities, validate records from an Excel file, and merge records efficiently while providing detailed progress and error reporting.
