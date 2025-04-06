@@ -89,7 +89,7 @@ This project is licensed under the GPL License. See the [LICENSE](https://github
 
 ## Contact
 
-For any questions or feedback, please contact me at r.xaleghi[at]gmail.com.
+For any questions or feedback, please contact me at [Reza Khaleghi](mailto:r.xaleghi@gmail.com?subject=[GitHub]%20XrmToolBox%20Merge%20Tool).
 
 ---
 
