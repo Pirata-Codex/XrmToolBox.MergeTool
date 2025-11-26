@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Activities;
+using System.Collections.Generic;
 using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Workflow;
 using Microsoft.Xrm.Sdk.Query;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
@@ -18,12 +18,15 @@ namespace Dynamics365.Merge
         private IOrganizationService OrgService;
         private bool FillNullsOnTargetFromSource;
         private Helper Helper;
-
         private EntityMetadata MetaData;
+        private readonly List<MergeError> _errors = new List<MergeError>();
+        private readonly int? _rowNumber;
 
         public event EventHandler<string> OnFunctionCalled;
+        public event EventHandler<MergeProgressDetail> OnProgressChanged;
+        public IReadOnlyCollection<MergeError> Errors => _errors.AsReadOnly();
 
-        public MergeRequest(string logicalName, string sourceId, string targetId, IOrganizationService orgService, bool fillNullsOnTargetFromSource)
+        public MergeRequest(string logicalName, string sourceId, string targetId, IOrganizationService orgService, bool fillNullsOnTargetFromSource, int? rowNumber = null)
         {
             LogicalName = logicalName;
             SourceId = new Guid(sourceId);
@@ -31,6 +34,39 @@ namespace Dynamics365.Merge
             this.OrgService = orgService;
             FillNullsOnTargetFromSource = fillNullsOnTargetFromSource;
             Helper = new Helper(orgService);
+            _rowNumber = rowNumber;
+        }
+
+        private void ReportProgress(string stage, string message, string relationship = null, int? current = null, int? total = null, Guid? relatedRecordId = null)
+        {
+            OnProgressChanged?.Invoke(this, new MergeProgressDetail
+            {
+                Stage = stage,
+                Message = message,
+                RelationshipSchemaName = relationship,
+                CurrentItem = current,
+                TotalItems = total,
+                RelatedRecordId = relatedRecordId,
+                SourceId = SourceId.ToString(),
+                TargetId = TargetId.ToString()
+            });
+        }
+
+        private void TrackError(string stage, string message, Exception ex, string operation = null, string relationship = null, Guid? relatedRecordId = null)
+        {
+            _errors.Add(new MergeError
+            {
+                RowNumber = _rowNumber,
+                SourceId = SourceId.ToString(),
+                TargetId = TargetId.ToString(),
+                Stage = stage,
+                Operation = operation,
+                RelationshipSchemaName = relationship,
+                RelatedRecordId = relatedRecordId,
+                Message = message,
+                Details = ex?.ToString(),
+                Timestamp = DateTime.UtcNow
+            });
         }
 
         private protected void GetEntityMetaData(string logicalName)
@@ -80,8 +116,14 @@ namespace Dynamics365.Merge
         {
             OnFunctionCalled?.Invoke(this, nameof(MergeOneToManyRelationship));
 
+            int totalRelationships = MetaData.OneToManyRelationships?.Length ?? 0;
+            int currentRelationship = 0;
+
             foreach (var item in MetaData.OneToManyRelationships)
             {
+                currentRelationship++;
+                ReportProgress(nameof(MergeOneToManyRelationship), $"Processing relationship {item.SchemaName}", item.SchemaName, currentRelationship, totalRelationships);
+
                 try
                 {
                     OneToManyRelationshipMetadata relationshipMetadata = RetrieveOneToManyRelationship(item.SchemaName);
@@ -98,13 +140,22 @@ namespace Dynamics365.Merge
                             break;
                         if (childEntity.Contains(referencingAttribute))
                         {
-                            childEntity[referencingAttribute] = new EntityReference(LogicalName, TargetId);
-                            OrgService.Update(childEntity);
+                            try
+                            {
+                                childEntity[referencingAttribute] = new EntityReference(LogicalName, TargetId);
+                                OrgService.Update(childEntity);
+                                ReportProgress(nameof(MergeOneToManyRelationship), $"Updated child record {childEntity.Id}", item.SchemaName, null, null, childEntity.Id);
+                            }
+                            catch (Exception updateEx)
+                            {
+                                TrackError(nameof(MergeOneToManyRelationship), $"Failed updating child record {childEntity.Id}", updateEx, "Update", item.SchemaName, childEntity.Id);
+                            }
                         }
                     }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    TrackError(nameof(MergeOneToManyRelationship), $"Failed processing relationship {item.SchemaName}", ex, "RetrieveRelationship", item.SchemaName);
                     continue;
                 }
             }
@@ -151,8 +202,11 @@ namespace Dynamics365.Merge
 
             try
             {
+                int total = collection.Entities.Count;
+                int current = 0;
                 foreach (var entity2 in collection.Entities)
                 {
+                    current++;
                     AssociateEntitiesRequest request = new AssociateEntitiesRequest();
                     request.Moniker1 = new EntityReference(entity1.LogicalName, entity1.Id);
                     request.Moniker2 = new EntityReference(entity2.LogicalName, entity2.Id);
@@ -161,11 +215,12 @@ namespace Dynamics365.Merge
 
                     // Execute the request.
                     OrgService.Execute(request);
+                    ReportProgress(nameof(AssociateManyToManyEntityRecords), $"Associated record {entity2.Id}", entityRelationshipName, current, total, entity2.Id);
                 }
             }
             catch (Exception e)
             {
-                throw e.InnerException;
+                TrackError(nameof(AssociateManyToManyEntityRecords), $"Failed associating relationship {entityRelationshipName}", e, "Associate", entityRelationshipName);
             }
         }
 
@@ -173,16 +228,23 @@ namespace Dynamics365.Merge
         {
             OnFunctionCalled?.Invoke(this, nameof(MergeManyToManyRecords));
 
+            int totalRelationships = MetaData.ManyToManyRelationships?.Length ?? 0;
+            int currentRelationship = 0;
+
             foreach (var item in MetaData.ManyToManyRelationships)
             {
+                currentRelationship++;
+                ReportProgress(nameof(MergeManyToManyRecords), $"Processing many-to-many {item.SchemaName}", item.SchemaName, currentRelationship, totalRelationships);
+
                 try
                 {
                     //if (!(bool)item.IsCustomRelationship) continue;
                     EntityCollection records = RetrieveManyToManyRecords(item, new EntityReference(LogicalName, SourceId));
                     AssociateManyToManyEntityRecords(new EntityReference(LogicalName, TargetId), records, item.SchemaName);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    TrackError(nameof(MergeManyToManyRecords), $"Failed processing many-to-many {item.SchemaName}", ex, "Associate", item.SchemaName);
                     continue;
                 }
             }
@@ -219,8 +281,18 @@ namespace Dynamics365.Merge
         {
             OnFunctionCalled?.Invoke(this, nameof(MergeFields));
 
-            Entity source = GetEntity(this.SourceId);
-            Entity target = GetEntity(this.TargetId);
+            Entity source;
+            Entity target;
+            try
+            {
+                source = GetEntity(this.SourceId);
+                target = GetEntity(this.TargetId);
+            }
+            catch (Exception ex)
+            {
+                TrackError(nameof(MergeFields), "Failed retrieving source or target entity", ex, "Retrieve");
+                return;
+            }
 
             AttributeCollection columns = source.Attributes;
             foreach (var att in columns)
@@ -230,6 +302,7 @@ namespace Dynamics365.Merge
                     if (FillNullsOnTargetFromSource)
                     {
                         target.Attributes.Add(att.Key, source[att.Key]);
+                        ReportProgress(nameof(MergeFields), $"Copied field {att.Key} from source to target");
                     }
                     else
                     {
@@ -237,7 +310,14 @@ namespace Dynamics365.Merge
                     }
                 }
             }
-            OrgService.Update(target);
+            try
+            {
+                OrgService.Update(target);
+            }
+            catch (Exception ex)
+            {
+                TrackError(nameof(MergeFields), "Failed updating target entity", ex, "Update");
+            }
             //try
             //{
             //    Helper.DeactivateRecord(source.LogicalName, source.Id);
@@ -251,43 +331,19 @@ namespace Dynamics365.Merge
 
         public void DoMerge()
         {
-            GetEntityMetaData(LogicalName);
+            try
+            {
+                GetEntityMetaData(LogicalName);
+            }
+            catch (Exception ex)
+            {
+                TrackError(nameof(GetEntityMetaData), "Failed retrieving entity metadata", ex, "RetrieveMetadata");
+                return;
+            }
+
             MergeOneToManyRelationship();
             MergeManyToManyRecords();
             MergeFields();
-        }
-    }
-    public class Merge : CodeActivity
-    {
-        [Input("Logical Name")]
-        [RequiredArgument]
-        public InArgument<string> SourceLogicalName { get; set; }
-
-        [Input("Source Id")]
-        [RequiredArgument]
-        public InArgument<string> SourceId { get; set; }
-
-        [Input("Target Id")]
-        [RequiredArgument]
-        public InArgument<string> TargetId { get; set; }
-
-        private IOrganizationService orgService;
-
-        protected override void Execute(CodeActivityContext context)
-        {
-            IWorkflowContext workflow = (IWorkflowContext)context.GetExtension<IWorkflowContext>();
-            IOrganizationServiceFactory organizationServiceFactory =
-                (IOrganizationServiceFactory)context.GetExtension<IOrganizationServiceFactory>();
-            orgService = organizationServiceFactory.CreateOrganizationService(workflow.UserId);
-
-            #region GetParameters
-            string LogicalName = context.GetValue(this.SourceLogicalName);
-            string sourceId = context.GetValue(this.SourceId);
-            string targetId = context.GetValue(this.TargetId);
-            #endregion
-
-            MergeRequest merge = new MergeRequest(LogicalName, sourceId, targetId, orgService, true);
-            merge.DoMerge();
         }
     }
 }
